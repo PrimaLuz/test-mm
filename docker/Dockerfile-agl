@@ -1,0 +1,73 @@
+##################################################
+# Stage 1: Base Python
+##################################################
+FROM nvcr.io/nvidia/pytorch:24.12-py3 AS base
+
+ENV PYTHONUNBUFFERED=1
+WORKDIR /workspace
+
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip
+
+COPY agl-zzh.lock .
+RUN pip install -r agl-zzh.lock
+
+##################################################
+# Stage 2: Build Dashboard (Node)
+##################################################
+FROM node:20 AS dashboard-builder
+
+WORKDIR /build
+
+# clone agentlightning
+# 当前main分支最新提交，时间截止20260304
+ARG AGENTLIGHTNING_REPO=https://github.com/microsoft/agent-lightning
+ARG AGENTLIGHTNING_REF=c746af2f76bebcae56007a59c223cdace411c89b 
+
+RUN git clone ${AGENTLIGHTNING_REPO}
+WORKDIR /build/agentlightning
+RUN git checkout ${AGENTLIGHTNING_REF}
+
+WORKDIR /build/agentlightning/dashboard
+RUN npm ci
+RUN npm run build
+
+##################################################
+# Stage 3: Build Python Wheel
+##################################################
+FROM base AS builder
+
+ARG AGENTLIGHTNING_REPO=https://github.com/microsoft/agent-lightning
+ARG AGENTLIGHTNING_REF=c746af2f76bebcae56007a59c223cdace411c89b
+
+RUN git clone ${AGENTLIGHTNING_REPO}
+WORKDIR /workspace/agentlightning
+RUN git checkout ${AGENTLIGHTNING_REF}
+
+# 把 dashboard build 产物复制进来
+COPY --from=dashboard-builder \
+    /build/agentlightning/dashboard/dist \
+    /workspace/agentlightning/dashboard/dist
+
+RUN pip install build
+RUN python -m build
+
+##################################################
+# Stage 4: Final Runtime
+##################################################
+FROM base
+
+WORKDIR /workspace
+
+COPY --from=builder /workspace/agentlightning/dist/*.whl /tmp/
+
+RUN pip install /tmp/*.whl
+
+EXPOSE 4747
+
+CMD ["python", "-m", "agentlightning.cli", "store", "--host", "0.0.0.0", "--port", "4747"]
