@@ -28,4 +28,4 @@ jobs:
       - name: Push image to Harbor
         run: |
           docker push \
-            ${{ secrets.HARBOR_REGISTRY }}/verl:0.6-cu128
+            ${{ secrets.A }}/verl:0.6-cu128
