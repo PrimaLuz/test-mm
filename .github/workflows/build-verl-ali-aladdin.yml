@@ -1,4 +1,4 @@
-name: Build AgentLightning Image
+name: Build verl-aladdin Image
 
 on:
   workflow_dispatch:
