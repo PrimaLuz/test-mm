@@ -1,0 +1,31 @@
+name: Sync verl image to ali
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ALIA }}
+          username: ${{ secrets.ALIB }}
+          password: ${{ secrets.ALIC }}
+
+      - name: Pull image from DockerHub
+        run: |
+          docker pull verlai/verl:base-verl0.6-cu128-cudnn9.8-torch2.8.0-fa2.7.4
+
+      - name: Tag image for Harbor
+        run: |
+          docker tag \
+            verlai/verl:base-verl0.6-cu128-cudnn9.8-torch2.8.0-fa2.7.4 \
+            ${{ secrets.ALID }}/verl:0.6-cu128
+
+      - name: Push image to Harbor
+        run: |
+          docker push \
+            ${{ secrets.ALID }}/verl:0.6-cu128
