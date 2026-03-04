@@ -1,0 +1,31 @@
+name: Sync verl image to Harbor
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.A }}
+          username: ${{ secrets.B }}
+          password: ${{ secrets.C }}
+
+      - name: Pull image from DockerHub
+        run: |
+          docker pull verlai/verl:base-verl0.6-cu128-cudnn9.8-torch2.8.0-fa2.7.4
+
+      - name: Tag image for Harbor
+        run: |
+          docker tag \
+            verlai/verl:base-verl0.6-cu128-cudnn9.8-torch2.8.0-fa2.7.4 \
+            ${{ secrets.A }}//verl:0.6-cu128
+
+      - name: Push image to Harbor
+        run: |
+          docker push \
+            ${{ secrets.HARBOR_REGISTRY }}/verl:0.6-cu128
