@@ -25,7 +25,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile
+          file: ./docker/Dockerfile-agl
           push: true
           tags: |
             ${{ secrets.ALID }}/agentlightning:0.3.0.dev
