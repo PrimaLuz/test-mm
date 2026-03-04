@@ -28,6 +28,6 @@ jobs:
           file: ./docker/Dockerfile-verl0.6
           push: true
           tags: |
-            ${{ secrets.ALID }}/verl::0.6-cu129
+            ${{ secrets.ALID }}/verl:0.6-cu129
           cache-from: type=gha
           cache-to: type=gha,mode=max
