@@ -67,7 +67,7 @@ RUN uv pip install -r pyproject.toml --frozen --system \
 # =============================================================================
 RUN uv pip uninstall --system agentlightning && \
     uv pip install --system agentlightning
-
+RUN pip install verl
 # =============================================================================
 # 8. 构建 Dashboard
 # =============================================================================
@@ -103,5 +103,6 @@ RUN rm -rf /workspace/agent-lightning
 # 11. 暴露端口
 # =============================================================================
 EXPOSE 8080
+
 
 
