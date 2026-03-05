@@ -1,0 +1,47 @@
+
+FROM verlai/verl:vllm011.latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /workspace
+
+# 1. 安装基础工具、Node.js 及 SSH 运行环境
+RUN apt-get update && \
+    apt-get install -y openssh-server net-tools vim telnet iputils-ping unzip bzip2 curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    mkdir /var/run/sshd && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 2. 升级基础构建工具
+RUN python -m pip install --upgrade pip setuptools wheel setuptools_scm
+
+# 3. 准备配置文件（用于安装依赖）
+COPY agl/test.toml ./pyproject.toml
+COPY agl/agentlightning/ ./agentlightning/
+
+# 4. 安装 custom-xoxo 中定义的所有第三方依赖
+# 这里使用 -e 主要是为了让 pip 解析 toml 里的递归引用
+RUN pip install --no-cache-dir -e ".[custom-xoxo]" \
+    --extra-index-url https://download.pytorch.org/whl/cu128
+
+# 5. 切换为正式 PyPI 版本（如果这是你的最终目的）
+# 先卸载本地伪造的包，再安装线上版
+RUN pip uninstall -y agentlightning && \
+    pip install --no-cache-dir agentlightning
+
+# 6. 构建 Dashboard
+# 动态获取安装路径并执行 npm build
+RUN AGENT_PATH=$(python -c "import agentlightning, os; print(os.path.dirname(agentlightning.__file__))") && \
+    if [ -d "$AGENT_PATH/dashboard" ]; then \
+        cd $AGENT_PATH/dashboard && \
+        npm ci && \
+        npm run build && \
+        rm -rf /root/.npm; \
+    fi
+
+# 7. 最后的清理
+RUN rm -rf /root/.cache/pip /build
+
+
+EXPOSE 8080
