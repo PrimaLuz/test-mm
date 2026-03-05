@@ -31,6 +31,6 @@ jobs:
           file: ./docker/Dockerfile-agl-uv
           push: true
           tags: |
-            ${{ secrets.ALID }}/agentlightning:0.3.0.dev
+            ${{ secrets.ALID }}/agentlightning:0.3.0.post1
           cache-from: type=gha
           cache-to: type=gha,mode=max
