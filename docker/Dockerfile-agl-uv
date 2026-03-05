@@ -65,7 +65,7 @@ RUN uv sync --frozen \
 # =============================================================================
 # 7. 切换为 PyPI 正式版本
 # =============================================================================
-RUN uv pip uninstall --system -y agentlightning && \
+RUN uv pip uninstall --system agentlightning && \
     uv pip install --system agentlightning
 
 # =============================================================================
