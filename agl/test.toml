@@ -152,7 +152,7 @@ agents = [
   "agentlightning[langchain]",
   "agentlightning[sql]",
   "agentlightning[rag]",
-  "agentlightning[crewai_group]",
+  "agentlightning[crewai]",
   "agentlightning[swebench]",
 ]
 
