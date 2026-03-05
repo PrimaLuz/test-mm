@@ -1,6 +1,9 @@
 name: Build AgentLightning Image UV
 
 on:
+   push:
+   branches:
+      - main
   workflow_dispatch:
 
 jobs:

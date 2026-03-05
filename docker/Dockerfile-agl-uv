@@ -82,6 +82,16 @@ RUN AGENT_PATH=$(python -c "import agentlightning, os; print(os.path.dirname(age
         echo "Warning: dashboard directory not found at $AGENT_PATH/dashboard"; \
     fi
 
+RUN AGENT_PATH="/usr/local/lib/python3.12/dist-packages/agentlightning" && \
+    if [ -d "$AGENT_PATH/dashboard" ]; then \
+        cd "$AGENT_PATH/dashboard" && \
+        npm ci --prefer-offline --no-audit --progress=false && \
+        npm run build && \
+        rm -rf /root/.npm; \
+    else \
+        echo "Warning: dashboard directory not found at $AGENT_PATH/dashboard"; \
+    fi
+
 # =============================================================================
 # 9. 导出环境（方便后期搬运/复现）
 # =============================================================================
