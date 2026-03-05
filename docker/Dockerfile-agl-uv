@@ -1,0 +1,105 @@
+# =============================================================================
+# 1. 基础镜像
+# =============================================================================
+FROM verlai/verl:vllm011.latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV UV_SYSTEM_PYTHON=1
+ENV UV_LINK_MODE=copy
+ENV UV_FROZEN=1
+WORKDIR /workspace
+
+# =============================================================================
+# 2. 安装 uv
+# =============================================================================
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# =============================================================================
+# 3. 系统工具安装
+# =============================================================================
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        openssh-server \
+        net-tools \
+        vim \
+        telnet \
+        iputils-ping \
+        unzip \
+        bzip2 \
+        curl \
+        git && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    mkdir -p /var/run/sshd && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/*
+
+# =============================================================================
+# 4. 克隆 agent-lightning 仓库
+# =============================================================================
+RUN git clone --depth 1 https://github.com/microsoft/agent-lightning.git /workspace/agent-lightning
+
+# =============================================================================
+# 5. 使用 uv sync 安装依赖到系统环境（关键步骤）
+# =============================================================================
+WORKDIR /workspace/agent-lightning
+
+# 同步所有依赖到系统 Python 环境
+RUN uv sync --system --frozen \
+    --group dev \
+    --group experiment \
+    --group image \
+    --group core-stable \
+    --group langchain \
+    --group torch-gpu-stable \
+    --group trl \
+    --group agents \
+    --group langchain
+
+# =============================================================================
+# 6. 本地可编辑安装 agentlightning（用于开发/调试）
+# =============================================================================
+# 注意：uv sync 已经安装了当前目录的包，这里 -e 是为了确保 editable 模式
+# RUN uv pip install --system -e .
+
+# =============================================================================
+# 7. 切换为 PyPI 正式版本
+# =============================================================================
+RUN uv pip uninstall --system -y agentlightning && \
+    uv pip install --system agentlightning
+
+# =============================================================================
+# 8. 构建 Dashboard
+# =============================================================================
+RUN AGENT_PATH=$(python -c "import agentlightning, os; print(os.path.dirname(agentlightning.__file__))") && \
+    echo "AgentLightning installed at: $AGENT_PATH" && \
+    if [ -d "$AGENT_PATH/dashboard" ]; then \
+        cd "$AGENT_PATH/dashboard" && \
+        npm ci --prefer-offline --no-audit --progress=false && \
+        npm run build && \
+        rm -rf /root/.npm; \
+    else \
+        echo "Warning: dashboard directory not found at $AGENT_PATH/dashboard"; \
+    fi
+
+# =============================================================================
+# 9. 导出环境（方便后期搬运/复现）
+# =============================================================================
+WORKDIR /workspace
+RUN uv pip freeze --system --exclude-editable > /workspace/requirements.txt
+
+# =============================================================================
+# 10. 清理缓存（减小镜像体积）
+# =============================================================================
+RUN rm -rf /root/.cache/uv \
+         /root/.cache/npm \
+         /root/.cache/pip \
+         /tmp/* \
+         /var/tmp/* && \
+    find / -name "*.pyc" -delete 2>/dev/null || true
+
+# =============================================================================
+# 11. 暴露端口
+# =============================================================================
+EXPOSE 8080
+
