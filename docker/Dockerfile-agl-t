@@ -22,8 +22,9 @@ COPY agl/agentlightning/ ./agentlightning/
 
 # 4. 安装 custom-xoxo 中定义的所有第三方依赖
 # 这里使用 -e 主要是为了让 pip 解析 toml 里的递归引用
-RUN pip install --no-cache-dir -e ".[custom-xoxo]" \
-    --extra-index-url https://download.pytorch.org/whl/cu128
+RUN pip install --no-cache-dir -e ".[custom-xoxo]"
+#  \
+#     --extra-index-url https://download.pytorch.org/whl/cu128
 
 # 5. 切换为正式 PyPI 版本（如果这是你的最终目的）
 # 先卸载本地伪造的包，再安装线上版
