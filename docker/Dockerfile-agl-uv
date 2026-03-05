@@ -45,7 +45,7 @@ RUN git clone --depth 1 https://github.com/microsoft/agent-lightning.git /worksp
 WORKDIR /workspace/agent-lightning
 ENV UV_SYSTEM_PYTHON=1
 # 同步所有依赖到系统 Python 环境
-RUN uv sync --frozen \
+RUN uv pip install -r pyproject.toml --frozen --system \
     --group dev \
     --group experiment \
     --group image \
@@ -98,8 +98,10 @@ RUN rm -rf /root/.cache/uv \
          /var/tmp/* && \
     find / -name "*.pyc" -delete 2>/dev/null || true
 
+RUN rm -rf /workspace/agent-lightning
 # =============================================================================
 # 11. 暴露端口
 # =============================================================================
 EXPOSE 8080
+
 
