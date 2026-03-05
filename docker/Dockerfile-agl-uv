@@ -43,9 +43,9 @@ RUN git clone --depth 1 https://github.com/microsoft/agent-lightning.git /worksp
 # 5. 使用 uv sync 安装依赖到系统环境（关键步骤）
 # =============================================================================
 WORKDIR /workspace/agent-lightning
-
+ENV UV_SYSTEM_PYTHON=1
 # 同步所有依赖到系统 Python 环境
-RUN uv sync --system --frozen \
+RUN uv sync --frozen \
     --group dev \
     --group experiment \
     --group image \
