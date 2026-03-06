@@ -31,6 +31,6 @@ jobs:
           file: ./docker/Dockerfile-agl-uv-pip
           push: true
           tags: |
-            ${{ secrets.ALID }}/agentlightning:0.3.0.post1
+            ${{ secrets.ALID }}/agentlightning:0.3.0.post2
           cache-from: type=gha
           cache-to: type=gha,mode=max
