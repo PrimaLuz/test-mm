@@ -51,8 +51,9 @@ RUN uv pip uninstall --system agentlightning && \
 
 # 构建 Dashboard
 RUN npm ci --prefer-offline --no-audit --progress=false && \
-        npm run build && \
-        rm -rf /root/.npm; \
+    npm run build && \
+    rm -rf /root/.npm
+
 RUN cp -r dashboard /usr/local/lib/python3.12/dist-packages/agentlightning/dashboard
 
 # 导出环境列表
