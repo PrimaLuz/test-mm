@@ -55,7 +55,7 @@ RUN cd dashboard && \
     npm run build && \
     rm -rf /root/.npm
 
-RUN cp -r dashboard /usr/local/lib/python3.12/dist-packages/agentlightning/dashboard
+RUN cp -r dashboard /usr/local/lib/python3.12/dist-packages/agentlightning
 
 # 导出环境列表
 WORKDIR /workspace
