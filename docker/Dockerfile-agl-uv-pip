@@ -1,4 +1,4 @@
-FROM verlai/verl:vllm011.latest
+FROM verlai/verl:vllm012.latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV UV_SYSTEM_PYTHON=1
@@ -19,6 +19,7 @@ RUN apt-get update && \
         iputils-ping \
         unzip \
         bzip2 \
+        tmux \
         curl \
         git && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
@@ -46,7 +47,7 @@ RUN uv pip install -r pyproject.toml --system \
 
 # 切换为 PyPI 正式版本
 RUN uv pip uninstall --system agentlightning && \
-    uv pip install --system agentlightning
+    uv pip install --system agentlightning pymongo swanlab
 
 
 # 构建 Dashboard
@@ -73,7 +74,6 @@ RUN rm -rf /root/.cache/uv \
 RUN rm -rf /workspace/agent-lightning
 
 # 暴露端口 aladdin镜像需求
-
 EXPOSE 8080
 
 
