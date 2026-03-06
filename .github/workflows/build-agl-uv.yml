@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'docker/Dockerfile-agl-uv'
+      - '.github/workflows/build-agl-uv.yml'
   workflow_dispatch:
 
 jobs:
