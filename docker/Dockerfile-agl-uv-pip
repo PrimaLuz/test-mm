@@ -1,4 +1,4 @@
-FROM verlai/verl:vllm012.latest
+FROM verlai/verl:vllm011.latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV UV_SYSTEM_PYTHON=1
@@ -48,6 +48,8 @@ RUN uv pip install -r pyproject.toml --system \
 # 切换为 PyPI 正式版本
 RUN uv pip uninstall --system agentlightning && \
     uv pip install --system agentlightning pymongo swanlab
+
+RUN uv pip install --system vllm==0.11.2
 
 
 # 构建 Dashboard
