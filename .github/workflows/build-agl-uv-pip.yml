@@ -7,7 +7,6 @@ on:
     paths:
       - 'docker/Dockerfile-agl-uv-pip'
       - '.github/workflows/build-agl-uv-pip.yml'
-
   workflow_dispatch:
 
 jobs:
@@ -18,6 +17,17 @@ jobs:
       packages: write
 
     steps:
+      # 第一步：暴力清理磁盘
+      - name: Free disk space (Extensive)
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af --volumes
+          df -h
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -30,13 +40,6 @@ jobs:
           registry: ${{ secrets.ALIA }}
           username: ${{ secrets.ALIB }}
           password: ${{ secrets.ALIC }}
-      # - name: Login to GHCR
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}      
-      #     password: ${{ secrets.GITHUB_TOKEN }}  
-
 
       - name: Build and Push
         uses: docker/build-push-action@v5
@@ -44,20 +47,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile-agl-uv-pip
           push: true
-          tags: |
-            ${{ secrets.ALID }}/agentlightning:0.3.0.h1
-          cache-from: type=gha
-          # cache-to: type=gha,mode=max
-
-
-      # - name: Build and Push
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: .
-      #     file: ./docker/Dockerfile-agl-uv-pip
-      #     push: true
-      #     tags: |
-      #       ghcr.io/primaluz/agentlightning:0.3.0.h1
-      #       ghcr.io/primaluz/agentlightning:latest
-      #     cache-from: type=gha
-      #     # cache-to: type=gha,mode=max
+          tags: ${{ secrets.ALID }}/agentlightning:0.3.0.h1
+          # 关键优化：使用 inline 缓存减小对 GitHub Actions 本身存储的依赖
+          cache-from: type=registry,ref=${{ secrets.ALID }}/agentlightning:cache
+          cache-to: type=registry,ref=${{ secrets.ALID }}/agentlightning:cache,mode=max
