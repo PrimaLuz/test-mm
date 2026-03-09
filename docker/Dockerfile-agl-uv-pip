@@ -51,7 +51,7 @@ RUN uv pip uninstall --system agentlightning && \
 
 RUN uv pip install --system vllm==0.11.2
 
-
+RUN pip install flash_attn==2.8.1 --no-build-isolation --force-reinstall
 # 构建 Dashboard
 RUN cd dashboard && \
     npm ci --prefer-offline --no-audit --progress=false && \
