@@ -34,10 +34,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile-agl-uv-pure-g
+          file: ./docker/Dockerfile-agl-pure-g
           push: true
           tags: |
-            ghcr.io/gogopowerranges/agentlightning:0.3.0.post4
-            ghcr.io/gogopowerranges/agentlightning:latest
+            ghcr.io/primaluz/agentlightning:0.3.0.post4
+            ghcr.io/primaluz/agentlightning:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
