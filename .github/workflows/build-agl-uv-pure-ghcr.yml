@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile-agl-uv-pip
+          file: ./docker/Dockerfile-agl-uv-pure-g
           push: true
           tags: |
             ghcr.io/gogopowerranges/agentlightning:0.3.0.post4
