@@ -37,7 +37,7 @@ jobs:
           file: ./docker/Dockerfile-agl-uv-pip
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner | lower}}/agentlightning:0.3.0.post4
-            ghcr.io/${{ github.repository_owner | lower}}/agentlightning:latest
+            ghcr.io/gogopowerranges/agentlightning:0.3.0.post4
+            ghcr.io/gogopowerranges/agentlightning:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
