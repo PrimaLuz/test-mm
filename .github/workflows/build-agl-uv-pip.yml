@@ -60,4 +60,4 @@ jobs:
             ghcr.io/primaluz/agentlightning:0.3.0.h1
             ghcr.io/primaluz/agentlightning:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # cache-to: type=gha,mode=max
