@@ -40,7 +40,6 @@ RUN uv pip install -r pyproject.toml --system \
     --group image \
     --group core-stable \
     --group langchain \
-    --group torch-gpu-stable \
     --group trl \
     --group agents \
     --group langchain
@@ -50,8 +49,8 @@ RUN uv pip uninstall --system agentlightning && \
     uv pip install --system agentlightning pymongo swanlab
 
 RUN uv pip install --system vllm==0.11.2
-
-RUN pip install flash_attn==2.8.1 --no-build-isolation --force-reinstall
+# 
+RUN uv pip install --system --reinstall flash_attn --no-build-isolation
 # 构建 Dashboard
 RUN cd dashboard && \
     npm ci --prefer-offline --no-audit --progress=false && \
