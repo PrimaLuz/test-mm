@@ -33,7 +33,7 @@ RUN git clone --depth 1 https://github.com/microsoft/agent-lightning.git /worksp
 
 WORKDIR /workspace/agent-lightning
 ENV UV_SYSTEM_PYTHON=1
-# 同步所有依赖到系统 Python 环境
+# 使用agl仓库中的项目文件同步所有依赖到系统 Python 环境
 RUN uv pip install -r pyproject.toml --system \
     --group dev \
     --group experiment \
@@ -51,7 +51,7 @@ RUN uv pip uninstall --system agentlightning && \
 RUN uv pip install --system vllm==0.11.2
 # 
 RUN uv pip install --system --reinstall flash_attn --no-build-isolation
-# 构建 Dashboard
+# 因为当前目录是git clone到WORKDIR下的agent-lightning，直接使用它构建 Dashboard，然后转移到system Python 环境中
 RUN cd dashboard && \
     npm ci --prefer-offline --no-audit --progress=false && \
     npm run build && \
