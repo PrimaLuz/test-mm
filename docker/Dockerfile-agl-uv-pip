@@ -56,8 +56,9 @@ RUN pip install flash_attn==2.8.1 --no-build-isolation --force-reinstall
 RUN cd dashboard && \
     npm ci --prefer-offline --no-audit --progress=false && \
     npm run build && \
-    rm -rf /root/.npm && \
-    cp -r dashboard /usr/local/lib/python3.12/dist-packages/agentlightning && \
+    rm -rf /root/.npm
+
+RUN cp -r dashboard /usr/local/lib/python3.12/dist-packages/agentlightning && \
     rm -rf /workspace/agent-lightning
 
 # 导出环境列表
