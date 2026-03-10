@@ -35,12 +35,17 @@ RUN uv pip install --system --python /usr/bin/python3.12 \
 # MAX_JOBS 控制并行编译线程，按构建机器核心数调整（建议4~8）
 # TORCH_CUDA_ARCH_LIST 按目标 GPU 设置:
 #   A100 → 8.0  |  A10/3090 → 8.6  |  H100 → 9.0
+# RUN uv pip uninstall --system --python /usr/bin/python3.12 \
+#         flash_attn flash-attn 2>/dev/null || true && \
+#     MAX_JOBS=4 \
+#     TORCH_CUDA_ARCH_LIST="9.0" \
+#     uv pip install --system --python /usr/bin/python3.12 \
+#         flash_attn --no-build-isolation
+
 RUN uv pip uninstall --system --python /usr/bin/python3.12 \
         flash_attn flash-attn 2>/dev/null || true && \
-    MAX_JOBS=4 \
-    TORCH_CUDA_ARCH_LIST="9.0" \
     uv pip install --system --python /usr/bin/python3.12 \
-        flash_attn --no-build-isolation
+        https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
 
 # # ── Step 4: 验证 flash_attn 与新 torch 正常工作 ───────────
 # RUN printf '%s\n' \
