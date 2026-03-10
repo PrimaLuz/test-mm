@@ -1,81 +1,89 @@
 FROM verlai/verl:vllm011.latest
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV UV_SYSTEM_PYTHON=1
 ENV UV_LINK_MODE=copy
 ENV UV_FROZEN=1
+ENV UV_SYSTEM_PYTHON=1
+ENV UV_PYTHON=/usr/bin/python3.12
+
 WORKDIR /workspace
 
-# 安装 uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# aladdin 镜像的sshd 配置
+# ── 系统依赖 ──────────────────────────────────────────────
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        openssh-server \
-        net-tools \
-        vim \
-        telnet \
-        iputils-ping \
-        unzip \
-        bzip2 \
-        tmux \
-        curl \
-        git && \
+        openssh-server net-tools vim telnet \
+        iputils-ping unzip bzip2 tmux curl git && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     mkdir -p /var/run/sshd && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/*
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
-# clone agent-lightning，使用仓库的pyproject.toml 安装依赖  uv可以调用其中的group，纯pip不可以
-RUN git clone --depth 1 https://github.com/microsoft/agent-lightning.git /workspace/agent-lightning
+# ── Step 1: 升级 vllm，确认 torch 被升级到什么版本 ─────────
+RUN uv pip install --system --python /usr/bin/python3.12 vllm==0.11.2 && \
+    python3.12 -c "import torch, vllm; print('vllm:', vllm.__version__, '| torch:', torch.__version__)"
+
+# ── Step 2: 重新安装 torchvision/torchaudio 匹配新 torch ───
+# cu128 对应 --index-url 里的 cu128，如果 torch 2.10 只有 cu126
+# 则改为 https://download.pytorch.org/whl/cu126
+RUN uv pip install --system --python /usr/bin/python3.12 \
+        torch==2.9.0 torchvision torchaudio \
+        --index-url https://download.pytorch.org/whl/cu128
+
+# ── Step 3: 卸载旧 flash_attn，基于新 torch 重新源码编译 ───
+# MAX_JOBS 控制并行编译线程，按构建机器核心数调整（建议4~8）
+# TORCH_CUDA_ARCH_LIST 按目标 GPU 设置:
+#   A100 → 8.0  |  A10/3090 → 8.6  |  H100 → 9.0
+RUN uv pip uninstall --system --python /usr/bin/python3.12 \
+        flash_attn flash-attn 2>/dev/null || true && \
+    MAX_JOBS=4 \
+    TORCH_CUDA_ARCH_LIST="9.0" \
+    uv pip install --system --python /usr/bin/python3.12 \
+        flash_attn --no-build-isolation
+
+# # ── Step 4: 验证 flash_attn 与新 torch 正常工作 ───────────
+# RUN printf '%s\n' \
+#     'import torch, flash_attn' \
+#     'print("torch:     ", torch.__version__)' \
+#     'print("flash_attn:", flash_attn.__version__)' \
+#     'print("CUDA:      ", torch.version.cuda)' \
+#     'print("OK")' 
+# ── Step 5: clone agent-lightning，安装其余依赖 ─────────────
+RUN git clone --depth 1 https://github.com/microsoft/agent-lightning.git \
+        /workspace/agent-lightning
 
 WORKDIR /workspace/agent-lightning
-ENV UV_SYSTEM_PYTHON=1
-# 使用agl仓库中的项目文件同步所有依赖到系统 Python 环境
-RUN uv pip install -r pyproject.toml --system \
-    --group dev \
-    --group experiment \
-    --group image \
-    --group core-stable \
-    --group langchain \
-    --group trl \
-    --group agents \
-    --group langchain
 
-# 切换为 PyPI 正式版本
-RUN uv pip uninstall --system agentlightning && \
-    uv pip install --system agentlightning pymongo swanlab
+RUN uv pip install --system --python /usr/bin/python3.12 \
+        -r pyproject.toml \
+        --group dev \
+        --group experiment \
+        --group image \
+        --group core-stable \
+        --group langchain \
+        --group trl \
+        --group agents && \
+    uv pip uninstall --system --python /usr/bin/python3.12 agentlightning && \
+    uv pip install --system --python /usr/bin/python3.12 \
+        agentlightning pymongo swanlab
 
-RUN uv pip install --system vllm==0.11.2
-# 
-RUN uv pip install --system --reinstall flash_attn --no-build-isolation
-# 因为当前目录是git clone到WORKDIR下的agent-lightning，直接使用它构建 Dashboard，然后转移到system Python 环境中
+# ── Step 6: 构建 Dashboard ─────────────────────────────────
 RUN cd dashboard && \
     npm ci --prefer-offline --no-audit --progress=false && \
     npm run build && \
-    rm -rf /root/.npm
-
-RUN cp -r dashboard /usr/local/lib/python3.12/dist-packages/agentlightning && \
+    rm -rf /root/.npm && \
+    cp -r /workspace/agent-lightning/dashboard \
+          /usr/local/lib/python3.12/dist-packages/agentlightning/ && \
     rm -rf /workspace/agent-lightning
 
-# 导出环境列表
+# ── 收尾 ──────────────────────────────────────────────────
 WORKDIR /workspace
-RUN uv pip freeze --system --exclude-editable > /workspace/requirements.txt
+RUN uv pip freeze --system --python /usr/bin/python3.12 \
+        --exclude-editable > /workspace/requirements.txt
 
-
-# 清理缓存
-RUN rm -rf /root/.cache/uv \
-         /root/.cache/npm \
-         /root/.cache/pip \
-         /tmp/* \
-         /var/tmp/* && \
+RUN rm -rf /root/.cache/uv /root/.cache/npm /root/.cache/pip \
+           /tmp/* /var/tmp/* && \
     find / -name "*.pyc" -delete 2>/dev/null || true
 
-# 暴露端口 aladdin镜像需求
 EXPOSE 8080
-
-
-
-

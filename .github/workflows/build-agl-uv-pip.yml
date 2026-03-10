@@ -47,4 +47,4 @@ jobs:
           context: .
           file: ./docker/Dockerfile-agl-uv-pip
           push: true
-          tags: ${{ secrets.ALID }}/agentlightning:0.3.0.h2
+          tags: ${{ secrets.ALID }}/agentlightning:0.3.0.h3
