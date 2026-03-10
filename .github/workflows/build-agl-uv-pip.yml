@@ -50,4 +50,4 @@ jobs:
           tags: ${{ secrets.ALID }}/agentlightning:0.3.0.h1
           # 关键优化：使用 inline 缓存减小对 GitHub Actions 本身存储的依赖
           cache-from: type=registry,ref=${{ secrets.ALID }}/agentlightning:cache
-          cache-to: type=registry,ref=${{ secrets.ALID }}/agentlightning:cache,mode=max
+          cache-to: type=registry,ref=${{ secrets.ALID }}/agentlightning:cache,mode=min
