@@ -37,7 +37,7 @@ jobs:
           file: ./docker/Dockerfile-slime
           push: true
           tags: |
-            ${{ secrets.ALID }}/slime:2025.3.9
+            ${{ secrets.ALID }}/slime:2025.3.11
             ${{ secrets.ALID }}/slime:latest
           # cache-from: type=gha
           # cache-to: type=gha,mode=max
