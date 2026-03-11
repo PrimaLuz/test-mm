@@ -10,7 +10,7 @@ ARG ENABLE_CUDA_13=0
 
 # ======================================== Setup =============================================
 
-WORKDIR /workspace/
+WORKDIR /root/
 
 # ======================================== Apt dependencies =============================================
 
@@ -60,10 +60,10 @@ RUN pip install nvidia-modelopt[torch]>=0.37.0 --no-build-isolation
 
 # This patch from masahi will be included in later Triton releases
 RUN if [ "$ENABLE_CUDA_13" = "1" ]; then \
-    (cd /workspace && git clone -b feat/v350_plus_8045 https://github.com/fzyzcjy/triton.git && cd triton && pip install -r python/requirements.txt && pip install --verbose -e .); \
+    (cd /root && git clone -b feat/v350_plus_8045 https://github.com/fzyzcjy/triton.git && cd triton && pip install -r python/requirements.txt && pip install --verbose -e .); \
   fi
 
-COPY docker/slime/requirements.txt /tmp/requirements.txt
+COPY requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
 # Temporarily install another sgl-kernel version for GB300 without rebuilding the whole image
@@ -78,11 +78,11 @@ RUN pip install nvidia-cudnn-cu12==9.16.0.29
 # reinstall numpy 1.x for megatron
 RUN pip install "numpy<2"
 
-RUN rm -rf /workspace/.cache/pip /workspace/flash-attention
+RUN rm -rf /root/.cache/pip /root/flash-attention
 
 # ====================================== Patches ============================================
 
-COPY docker/slime/patch/${PATCH_VERSION}/megatron.patch /workspace/Megatron-LM/
+COPY docker/patch/${PATCH_VERSION}/megatron.patch /root/Megatron-LM/
 RUN cd Megatron-LM && \
     git update-index --refresh && \
     git apply megatron.patch --3way && \
@@ -94,7 +94,7 @@ RUN cd Megatron-LM && \
 
 # TODO temporarily skip patching for GB200/GB300 (and require users to bring their own sglang version). should add back later.
 ARG ENABLE_SGLANG_PATCH=1
-COPY docker/slime/patch/${PATCH_VERSION}/sglang.patch /sgl-workspace/sglang/
+COPY docker/patch/${PATCH_VERSION}/sglang.patch /sgl-workspace/sglang/
 RUN if [ "$ENABLE_SGLANG_PATCH" = "1" ]; then \
   cd /sgl-workspace/sglang && \
   git update-index --refresh && \
@@ -109,10 +109,10 @@ fi
 # ====================================== Install main package ============================================
 
 ARG SLIME_COMMIT=main
-RUN git clone https://github.com/THUDM/slime.git /workspace/slime && \
-    cd /workspace/slime && \
+RUN git clone https://github.com/THUDM/slime.git /root/slime && \
+    cd /root/slime && \
     git checkout ${SLIME_COMMIT} && \
     pip install -e . --no-deps
 
-RUN cd /workspace/slime/slime/backends/megatron_utils/kernels/int4_qat && \
+RUN cd /root/slime/slime/backends/megatron_utils/kernels/int4_qat && \
     pip install . --no-build-isolation
