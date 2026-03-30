@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile-slime
+          file: ./docker/Dockerfile-slime-ali
           push: true
           tags: |
             ${{ secrets.ALID }}/slime:2026.3.11.post1
