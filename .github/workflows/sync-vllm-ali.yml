@@ -1,0 +1,31 @@
+name: Sync vLLM kimi-k3 image to Ali
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to Ali Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ALIA }}
+          username: ${{ secrets.ALIB }}
+          password: ${{ secrets.ALIC }}
+
+      - name: Pull image from DockerHub
+        run: |
+          docker pull vllm/vllm-openai:kimi-k3
+
+      - name: Tag image for Ali Registry
+        run: |
+          docker tag \
+            vllm/vllm-openai:kimi-k3 \
+            ${{ secrets.ALID }}/vllm-openai:kimi-k3
+
+      - name: Push image to Ali Registry
+        run: |
+          docker push \
+            ${{ secrets.ALID }}/vllm-openai:kimi-k3
